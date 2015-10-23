@@ -1,10 +1,17 @@
 #!/usr/bin/python3
 
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
 import pprint
 
-fskeys = """keyboard_key_backspace
+fskeys = """keyboard_key_volumeup
+keyboard_key_volumedown
+keyboard_key_mute
+keyboard_key_audionext
+keyboard_key_audioprev
+keyboard_key_audiostop
+keyboard_key_audioplay
+keyboard_key_backspace
 keyboard_key_tab
 keyboard_key_clear
 keyboard_key_return
@@ -138,7 +145,7 @@ keyboard_key_undo"""
 
 
 class CaptureTool(QtWidgets.QMainWindow):
-    
+
     def __init__(self, outfile, var_name='all_hostactions'):
         super().__init__()
         self.var_name = var_name
@@ -157,18 +164,18 @@ class CaptureTool(QtWidgets.QMainWindow):
             Please press the following keys on your keyboard.
             If you don't know what a specific key is, just press Esc.
             I am smart and I already know the keycode for Esc.
-            
-            """)
+
+        """)
         self.vl = QtWidgets.QVBoxLayout(self.cw)
         self.vl.addWidget(self.lbmsg)
         self.vl.addWidget(self.lbkey)
-        
+
     def keyReleaseEvent(self, event):
         try:
             self.next_key = next(self.all_keys_gen)
         except StopIteration:
             self.close()
-            return # why!?
+            return  # why!?
         self.lbkey.setText(self.next_key)
         scancode = event.nativeScanCode()
         if scancode == 9:
@@ -177,7 +184,7 @@ class CaptureTool(QtWidgets.QMainWindow):
             print(scancode, self.active_key)
             self.outdict[scancode] = self.active_key.split('_')[-1]
         self.active_key = self.next_key
-    
+
     def closeEvent(self, event):
         self.outdict[9] = 'escape'
         if len(self.outdict) > 1:
@@ -192,7 +199,7 @@ if __name__ == '__main__':
         outfile = sys.argv[1]
     except IndexError:
         print('Usage: {0} <outputfile>\n\
-              Warning! This file will be overwritten.'.format(sys.argv[0]))
+            Warning! This file will be overwritten.'.format(sys.argv[0]))
         quit()
     app = QtWidgets.QApplication(sys.argv)
     ct = CaptureTool(outfile=outfile)

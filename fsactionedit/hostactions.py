@@ -103,8 +103,16 @@ all_hostactions = {
     127: 'pause',
     133: 'lsuper',
     134: 'rsuper',
-    135: 'menu'
+    135: 'menu',
+    121: 'mute',
+    122: 'volumedown',
+    123: 'volumeup',
+    171: 'audionext',
+    172: 'audioplay',
+    173: 'audioprev'
     }
+
+# TODO: audiostop = ???
 
 
 class HostActions:
