@@ -35,7 +35,7 @@ class JoyCapture(QtCore.QProcess):
         for line in events:
             try:
                 event = json.loads(line)
-            except json.decoder.JSONDecodeError:
+            except ValueError:
                 continue
             jtype = event.get('type', '')
             if jtype == 'joy-device-added':
