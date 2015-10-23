@@ -77,3 +77,4 @@ class JoyCaptureButton(QtWidgets.QPushButton):
         if self.isChecked() is True:
             scancode = event.nativeScanCode()
             self.sig.emit(scancode)
+            self.setChecked(False)
