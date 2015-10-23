@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+
+import sys
+import webbrowser
+from PyQt5 import QtCore, QtGui, QtWidgets
+import fsactionedit.guiwidgets as guiwidgets
+from fsactionedit.hostactions import HostActions
+from fsactionedit.amigaactions import AmigaActions
+from fsactionedit.joystickcapture import JoyCapture
+from fsactionedit.confighandler import ConfigHandler
+
+
+class ActionEditor(QtWidgets.QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+
+        self.amigaactions = AmigaActions()
+        self.hostactions = HostActions()
+        self.joycapture = JoyCapture(self)
+        self.confighandler = ConfigHandler()
+        self.init_ui()
+
+    def init_ui(self):
+        self.setWindowTitle('FS-UAE ActionEditor')
+        icon = QtGui.QIcon.fromTheme('fs-uae')
+        self.setWindowIcon(icon)
+        self.cw = QtWidgets.QWidget(parent=self)
+        self.setCentralWidget(self.cw)
+
+        self.menubar = guiwidgets.MenuBar(self)
+        self.setMenuBar(self.menubar)
+        self.menubar.acquit.triggered.connect(self.close)
+        self.menubar.acnew.triggered.connect(self.on_new_config)
+        self.menubar.acload.triggered.connect(self.on_load_config)
+        self.menubar.acsaveas.triggered.connect(self.on_saveas_config)
+        self.menubar.acsave.triggered.connect(self.on_save_config)
+        self.menubar.accim.triggered.connect(self.on_accim)
+        self.menubar.acia.triggered.connect(self.on_acia)
+        self.menubar.aca.triggered.connect(self.on_aca)
+        self.statusbar = QtWidgets.QStatusBar(self)
+        self.setStatusBar(self.statusbar)
+
+        self.gridLayout = QtWidgets.QGridLayout(self.cw)
+        icon = QtGui.QIcon.fromTheme('application-exit')
+        self.pbexit = QtWidgets.QPushButton(icon, 'Quit')
+        self.gridLayout.addWidget(self.pbexit, 3, 3, 1, 1)
+        self.lbconfig = QtWidgets.QLabel('')
+        self.gridLayout.addWidget(self.lbconfig, 2, 0, 1, 2)
+
+        self.gbHost = QtWidgets.QGroupBox('Host Action', self.cw)
+        self.hgridlayout = QtWidgets.QGridLayout(self.gbHost)
+
+        icon = QtGui.QIcon.fromTheme('input-keyboard')
+        self.pbcapturekey = guiwidgets.JoyCaptureButton(
+            icon, 'Click Here To Capture A Key', self.gbHost)
+        self.hgridlayout.addWidget(self.pbcapturekey, 0, 0)
+
+        icon = QtGui.QIcon.fromTheme('input-gaming')
+        self.pbcapturejoy = QtWidgets.QPushButton(
+            icon, 'Click To Capture Joysiick', self.gbHost)
+        self.pbcapturejoy.setCheckable(True)
+        self.hgridlayout.addWidget(self.pbcapturejoy, 0, 1)
+
+        self.gridLayout.addWidget(self.gbHost, 0, 0, 1, 2)
+        self.gbAmiga = QtWidgets.QGroupBox('Amiga Action', self)
+        self.agridlayout = QtWidgets.QGridLayout(self.gbAmiga)
+
+        self.cbamiga1 = guiwidgets.AmigaSubActionComboBox(self.gbAmiga)
+        self.agridlayout.addWidget(self.cbamiga1, 0, 0)
+        self.cbamiga2 = guiwidgets.AmigaSubActionComboBox(self.gbAmiga)
+        self.agridlayout.addWidget(self.cbamiga2, 0, 1)
+        self.cbamiga3 = guiwidgets.AmigaSubActionComboBox(self.gbAmiga)
+        self.agridlayout.addWidget(self.cbamiga3, 0, 2)
+        self.cbamiga4 = guiwidgets.AmigaSubActionComboBox(self.gbAmiga)
+        self.agridlayout.addWidget(self.cbamiga4, 0, 3)
+        self.cbamiga5 = guiwidgets.AmigaSubActionComboBox(self.gbAmiga)
+        self.agridlayout.addWidget(self.cbamiga5, 0, 4)
+        self.gridLayout.addWidget(self.gbAmiga, 1, 0, 1, 2)
+
+        self.cbamiga_all = (self.cbamiga1, self.cbamiga2, self.cbamiga3,
+                            self.cbamiga4, self.cbamiga5,)
+
+        self.lehost = QtWidgets.QLineEdit(self.cw)
+        self.hgridlayout.addWidget(self.lehost, 1, 0, 1, 0)
+
+        self.leamiga = QtWidgets.QLineEdit(self.cw)
+        self.agridlayout.addWidget(self.leamiga, 1, 0, 5, 0)
+
+        self.gbConfig = QtWidgets.QGroupBox('Configuration', self.cw)
+        self.gridLayout_2 = QtWidgets.QGridLayout(self.gbConfig)
+        self.lwconfig = QtWidgets.QListWidget(self.gbConfig)
+        self.lwconfig.setSortingEnabled(True)
+        self.gridLayout_2.addWidget(self.lwconfig, 0, 0, 1, 3)
+
+        self.sizepolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.sizepolicy.setHorizontalStretch(1)
+        self.gbConfig.setSizePolicy(self.sizepolicy)
+        self.gbAmiga.setSizePolicy(self.sizepolicy)
+
+        icon = QtGui.QIcon.fromTheme('list-add')
+        self.pbadd = QtWidgets.QPushButton(icon, 'Add', self.gbConfig)
+        self.gridLayout_2.addWidget(self.pbadd, 1, 0, 1, 1)
+
+        icon = QtGui.QIcon.fromTheme('list-remove')
+        self.pbdelete = QtWidgets.QPushButton(icon, 'Remove', self.gbConfig)
+        self.gridLayout_2.addWidget(self.pbdelete, 1, 1, 1, 1)
+
+        icon = QtGui.QIcon.fromTheme('edit-clear')
+        self.pbclear = QtWidgets.QPushButton(icon, 'Clear', self.gbConfig)
+        self.gridLayout_2.addWidget(self.pbclear, 1, 2, 1, 1)
+        self.pbclear.clicked.connect(self.lwconfig.clear)
+
+        self.gridLayout.addWidget(self.gbConfig, 0, 2, 3, 2)
+
+        self.pbcapturekey.sig.connect(self.on_key_captured)
+        self.pbcapturekey.toggled.connect(self.on_pbcapturekey_toggled)
+
+        self.pbcapturejoy.toggled.connect(self.on_pbcapturejoy_toggled)
+        self.cbamiga1.addItem('Start here...')
+        self.cbamiga1.addItems(self.amigaactions.get_next_item(['action']))
+        [i.currentIndexChanged.connect(
+            self.on_cbamiga_all) for i in self.cbamiga_all]
+
+        self.pbadd.clicked.connect(self.on_pbadd_clicked)
+        self.pbdelete.clicked.connect(self.on_pbdelete_clicked)
+        self.pbexit.clicked.connect(self.close)
+
+        self.joycapture.eventsig.connect(self.lehost.setText)
+
+    def on_new_config(self):
+        self.menubar.acsave.setDisabled(True)
+        self.confighandler.loaded_config = None
+        self.lbconfig.setText('Current config: <new unsaved configuration>')
+        self.statusbar.showMessage('Created new configuration.')
+
+    def on_load_config(self):
+        filename, flt = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self, caption='Select a configuration file', filter=(
+                'FS-UAE Configuration Files (*.fs-uae)'))
+        if filename is '':
+            return
+        actions = self.confighandler.load(filename)
+        if actions is None:
+            self.statusbar.showMessage('Error loading configuration.')
+            return
+        self.lwconfig.clear()  # perhaps not!?
+        self.lwconfig.addItems(actions)
+        self.menubar.acsave.setDisabled(False)
+        self.lbconfig.setText('Current config: ' + filename)
+        msg = 'Loaded {0} action(s) and {1} other option(s).'.format(
+            len(actions), self.confighandler.non_action_count)
+        self.statusbar.showMessage(msg)
+
+    def on_saveas_config(self):
+        filename, flt = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self, caption='Select a configuration file', filter=(
+                'FS-UAE Configuration Files (*.fs-uae)'))
+        if filename is '':
+            return
+        self.on_save_config(filename=filename)
+
+    def on_save_config(self, sig_checked=False, filename=None):
+        if filename is None:
+            filename = self.confighandler.loaded_configfile
+        if filename is None:  # should not happen
+            print('on_save_config: No filename')
+            return
+        optionlist = [self.lwconfig.item(i).text() for i in range(
+            self.lwconfig.count())]
+        configfile = self.confighandler.save(filename, optionlist)
+        if configfile is False:
+            self.statusbar.showMessage('Error saving configuration.')
+        else:
+            self.menubar.acsave.setDisabled(False)
+            self.lbconfig.setText('Current config: ' + configfile)
+            self.statusbar.showMessage('Configuration saved.')
+
+    def on_pbadd_clicked(self):
+        aa = self.leamiga.text()
+        ha = self.lehost.text()
+        if not self.amigaactions.is_valid(aa):
+            self.statusbar.showMessage(
+                '{0} is not a valid Amiga action.'.format(aa))
+            return
+        if not '_' in ha:  # FIXME: better checks
+            self.statusbar.showMessage(
+                '{0} is not a valid Host action.'.format(ha))
+            return
+        opt = ' = '.join((ha, aa))
+        if not self.lwconfig.findItems(ha, QtCore.Qt.MatchStartsWith):
+            self.lwconfig.addItem(opt)
+            self.statusbar.showMessage('Added one action.')
+        else:
+            self.statusbar.showMessage('{0} is already configured.'.format(ha))
+
+    def on_pbdelete_clicked(self):
+        row = self.lwconfig.currentRow()
+        item = self.lwconfig.takeItem(row)
+        if item is None:
+            return
+        self.statusbar.showMessage('Deleted one action.')
+        action = item.text().split('=', 1)[0].strip()
+        self.confighandler.remove_action(action)
+
+    def on_key_captured(self, scancode):
+        hostkey = self.hostactions.actions.get(scancode)
+        if hostkey is not None:
+            self.lehost.setText('keyboard_key_{0}'.format(hostkey))
+
+    def on_pbcapturekey_toggled(self):
+        self.pbcapturejoy.setChecked(False)
+        if self.pbcapturekey.isChecked() is True:
+            self.pbcapturekey.setText('Press A Key On Your Keyboard')
+        else:
+            self.pbcapturekey.setText('Click Here To Capture A Key')
+
+    def on_pbcapturejoy_toggled(self):
+        self.pbcapturekey.setChecked(False)
+        if self.pbcapturejoy.isChecked() is True:
+            self.pbcapturejoy.setText('Joysick Capture Enabled')
+            self.joycapture.enable()
+        else:
+            self.pbcapturejoy.setText('Click Here To Capture Joysick')
+            self.joycapture.disable()
+
+    def on_cbamiga_all(self, idx):
+        sender = self.sender()
+        subaction_no = sender.subaction_number
+        lst = self._list_actions_by_index(subaction_no)
+        if subaction_no >= len(self.cbamiga_all):
+            return
+        next_subaction = self.cbamiga_all[subaction_no]
+        next_subaction.clear()
+        next_subaction.addItems(self.amigaactions.get_next_item(lst))
+        self.update_leamiga()
+
+    def update_leamiga(self):
+        action = '_'.join(
+            [x for x in self._list_actions_by_index(5) if x is not ''])
+        if self.amigaactions.is_valid(action):
+            self.leamiga.setText(action)
+        else:  # should not happen
+            self.leamiga.clear()
+
+    def _list_actions_by_index(self, index):
+        return ['action'] + [
+            x.currentText() for x in self.cbamiga_all[:index]]
+
+    def on_accim(self):
+        webbrowser.open('http://fs-uae.net/input-mapping')
+
+    def on_acia(self):
+        webbrowser.open('http://fs-uae.net/input-actions')
+
+    def on_aca(self):
+        txt1 = 'FS-UAE ActionEditor - An easy to use custom input action '
+        txt2 = 'editor for the famous Amiga emulator FS-UAE.\n'
+        txt3 = 'Crafted together by jbl007, released under WTFPL.'
+        QtWidgets.QMessageBox.about(self, 'About', txt1 + txt2 + txt3)
+
+    def closeEvent(self, event):
+        self.joycapture.disable()
+        self.pbcapturekey.setChecked(False)
+        event.accept()
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    actioneditor = ActionEditor()
+    actioneditor.show()
+    sys.exit(app.exec_())
