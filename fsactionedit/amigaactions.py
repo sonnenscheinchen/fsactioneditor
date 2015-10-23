@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# grep action_ $SRCDIR/src/fs-uae/input.c | cut -d \" -f 2 | sort
+# grep " = \"action_" $SRCDIR/libfsemu/src/emu/input.c | cut -d \" -f 2
+
 all_actions = """
 action_activate_cartridge
 action_arcadia_coin_1
@@ -405,6 +408,18 @@ action_volume_down
 action_volume_mute
 action_volume_up
 action_warp
+action_full_keyboard
+action_fullscreen
+action_grab_input
+action_menu
+action_screenshot
+action_special
+action_taunt
+action_volume_down
+action_volume_mute
+action_volume_up
+action_zoom
+action_zoom_border
 """
 
 
