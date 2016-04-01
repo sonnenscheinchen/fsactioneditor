@@ -178,8 +178,8 @@ class ActionEditor(QtWidgets.QMainWindow):
             self.statusbar.showMessage('Configuration saved.')
 
     def on_pbadd_clicked(self):
-        aa = self.leamiga.text()
-        ha = self.lehost.text()
+        aa = self.leamiga.text() or '(Empty field)'
+        ha = self.lehost.text() or '(Empty field)'
         if not self.amigaactions.is_valid(aa):
             self.statusbar.showMessage(
                 '{0} is not a valid Amiga action.'.format(aa))
@@ -189,7 +189,8 @@ class ActionEditor(QtWidgets.QMainWindow):
                 '{0} is not a valid Host action.'.format(ha))
             return
         opt = ' = '.join((ha, aa))
-        if not self.lwconfig.findItems(ha, QtCore.Qt.MatchStartsWith):
+        if not self.lwconfig.findItems('{0} = '.format(
+                ha), QtCore.Qt.MatchStartsWith):
             self.lwconfig.addItem(opt)
             self.statusbar.showMessage('Added one action.')
         else:
@@ -230,6 +231,7 @@ class ActionEditor(QtWidgets.QMainWindow):
         subaction_no = sender.subaction_number
         lst = self._list_actions_by_index(subaction_no)
         if subaction_no >= len(self.cbamiga_all):
+            self.update_leamiga()
             return
         next_subaction = self.cbamiga_all[subaction_no]
         next_subaction.clear()
